@@ -5,10 +5,10 @@ const jsonParser = express.json();
 const mysql = require("mysql2");
 
 const connection = mysql.createConnection({
-    host: "localhost",
-    user: "root",
+    host: "markovrv.ru",
+    user: "blog",
     database: "blog",
-    password: ""
+    password: "vYVLns64CjeQHUX8"
 });
 
 app.use(express.static(__dirname + "/../frontend/dist"));
