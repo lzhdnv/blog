@@ -2,55 +2,20 @@
   <div id="app" class="container">
     <br>
     <b-nav>
-      <b-nav-item @click="article = null">Все статьи</b-nav-item>
-      <b-nav-item @click="getNewArticle">Добавить статью</b-nav-item>
+      <b-nav-item @click="book = null; searchMode=false">Все книги</b-nav-item>
+      <b-nav-item @click="addBook">Найти книгу</b-nav-item>
     </b-nav>
     <hr>
-    <h3 v-if="articles.length>0">Все статьи</h3>
-    <b-table striped hover :items="articles" @row-clicked="articleClick"></b-table>
-    
-    <div v-if="article && !editMode">
-      <h3>{{ article.name }}</h3>
-      <p v-html="article.content" />
-      <b-button variant="success" @click="editMode = true" >Изменить</b-button>
-    </div>
-
-    <b-form @submit.prevent="postArticle" v-if="article && editMode">
-      <h3 v-if="article.id > 0">Изменение статьи</h3>
-      <h3 v-else>Добавление статьи</h3>
-      <b-form-group
-        id="input-group-1"
-        label="Название:"
-        label-for="name"
-        description="Введите название статьи"
-      >
-        <b-form-input
-          id="name"
-          v-model="article.name"
-          type="text"
-          placeholder="Введите название статьи"
-          required
-        ></b-form-input>
-      </b-form-group>
-
-      <b-form-group
-        id="input-group-2"
-        label="Содержание:"
-        label-for="content"
-        description="Введите содержание статьи"
-      >
-        <b-form-textarea
-          id="content"
-          v-model="article.content"
-          placeholder="Введите содержание статьи"
-          rows="3"
-          max-rows="6"
-        ></b-form-textarea>
-      </b-form-group>
-      <b-button type="submit" variant="primary">Сохранить</b-button>
-      <b-button variant="danger" v-if="article.id > 0" @click="delArticle" style="margin-left: 6px;">Удалить</b-button>
+    <div v-if="!searchMode">
+    <h3 v-if="books.length>0">Все книги</h3>
+    <b-table striped hover :items="books" @row-clicked="bookClick"></b-table>
+  </div>
+  <b-form @submit.prevent="postBook" v-if="book && searchMode">
+      <b-form-input type="text" v-model="search" placeholder="Поиск"></b-form-input>
+  <b-list-group v-if="search.length > 0">
+      <b-list-item-group v-for="book in filteredBooks" :key = "book.idbook" > Название книги: {{ book.title }} Автор: {{ book.author }} Год выпуска: {{ book.year }} Количество книг: {{ book.count }}<br></b-list-item-group>
+    </b-list-group>
     </b-form>
-    
   </div>
 </template>
 
@@ -59,51 +24,56 @@ export default {
   name: 'App',
   data() {
     return {
-      editMode: false, 
-      articles: [],
-      article: null
+      searchMode: false, 
+      books: [],
+      book: null,
+      search: ''
     }
   },
+  computed:{  
+      filteredBooks:function(){ 
+        var self = this; 
+        return this.books.filter(function(book){ 
+          return book.title.toLowerCase().indexOf(self.search.toLowerCase()) !== -1 || book.author.toLowerCase().indexOf(self.search.toLowerCase())!== -1 || book.year.toLowerCase().indexOf(self.search.toLowerCase())!== -1;  
+          }); 
+      } 
+ 
+    },
   methods: {
-    getArticles() {
-      this.axios.get("api/articles").then((response) => {
-          this.articles = response.data
+    getBooks() {
+      this.axios.get("api/books").then((response) => {
+          this.books = response.data
       })
     },
-    articleClick(article) {
-      this.article = article
-      this.editMode = false
-    },
-    postArticle() {
-      if(this.article.id > 0)
-        this.axios.post("api/article", this.article).then(() => {
-            this.editMode = false
+    postBook() {
+      if(this.book.idbook > 0)
+        this.axios.post("api/book", this.book).then(() => {
+            this.searchMode = false
         }) 
       else 
-        this.axios.put("api/articles", this.article).then((response) => {
-              this.editMode = false
-              this.article.id = response.data.insertId
-              this.articles.push(this.article)
+        this.axios.put("api/books", this.book).then((response) => {
+              this.searchMode = false
+              this.book.idbook = response.data.insertId
+              this.books.push(this.book)
           })    
     },
-    getNewArticle() {
-      this.article = {
-        id: 0,
-        name: '',
-        content: ''
-      }
-      this.editMode = true
+    bookClick(book) {
+      this.book = book
+      this.searchMode = false
     },
-    delArticle() {
-      this.axios.delete("api/article?id="+this.article.id).then(() => {
-        this.getArticles()
-        this.editMode = false
-        this.article = null
-      })
+    addBook() {
+      this.book = {
+        idbook: 0,
+        title: '',
+        author: '',
+        year: '',
+        count: 0
+      }
+      this.searchMode = true
     }
   },
   created() {
-    this.getArticles()
+    this.getBooks()
   }
 }
 </script>
